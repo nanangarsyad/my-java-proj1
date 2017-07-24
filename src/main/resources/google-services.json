@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "216740882242",
+    "firebase_url": "https://steapps-50634.firebaseio.com",
+    "project_id": "steapps-50634",
+    "storage_bucket": "steapps-50634.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:216740882242:android:62578a2435ca7f5e",
+        "android_client_info": {
+          "package_name": "com.steapps.steapps"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "216740882242-p04d9jt8il75mtop3vtbmcm69okhecdk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.steapps.steapps",
+            "certificate_hash": "c54a436401fd81b23914a891c6a9cf230fe35cd1"
+          }
+        },
+        {
+          "client_id": "216740882242-vtvsi7fjgugu2m75dudvhin8dlm521c0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMWlF-QwAVeG7q4Z9EoMTqO4Ku5FvcMh0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "216740882242-vtvsi7fjgugu2m75dudvhin8dlm521c0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
