@@ -33,7 +33,7 @@ public class DBKey {
     public static final String FORM_KELENGKAPAN_SEGITIGA_PENGAMAN = "form_kelengkapan_segitiga_pengaman";
     public static final String FORM_KELENGKAPAN_DONGKRAK = "form_kelengkapan_dongkrak";
     public static final String FORM_KELENGKAPAN_PITA_PEMBATAS = "form_kelengkapan_pita_pembatas";
-    public static final String FORM_KELENGKAPAN_GANSAL_RODA = "form_kelengkapan_gansal_roda";
+    public static final String FORM_KELENGKAPAN_GANJAL_RODA = "form_kelengkapan_ganjal_roda";
     public static final String FORM_KELENGKAPAN_KOTAK_OBAT = "form_kelengkapan_kotak_obat";
 
     public static final String FORM_PLACARD_KANAN = "form_placard_kanan";
@@ -71,7 +71,7 @@ public class DBKey {
             FORM_KELENGKAPAN_SEGITIGA_PENGAMAN,
             FORM_KELENGKAPAN_DONGKRAK,
             FORM_KELENGKAPAN_PITA_PEMBATAS,
-            FORM_KELENGKAPAN_GANSAL_RODA,
+            FORM_KELENGKAPAN_GANJAL_RODA,
             FORM_KELENGKAPAN_KOTAK_OBAT,
 
             FORM_PLACARD_KANAN,

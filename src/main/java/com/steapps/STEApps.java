@@ -286,7 +286,7 @@ public class STEApps {
 		f_chckbxSegtigaPengaman.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_SEGITIGA_PENGAMAN));
 		f_chckbxDongkrak.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_DONGKRAK));
 		f_chckbxPitaPembatas.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_PITA_PEMBATAS));
-		f_chckbxGansalRoda.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_GANSAL_RODA));
+		f_chckbxGansalRoda.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_GANJAL_RODA));
 		f_chckbxKotakObat.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_KOTAK_OBAT));
 		
 		// FROM PLACARD
