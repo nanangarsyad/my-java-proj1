@@ -1,20 +1,16 @@
 package com.steapps;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.EventQueue;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
-import javax.swing.JComponent;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -25,7 +21,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
-import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
@@ -33,20 +28,17 @@ import javax.swing.border.TitledBorder;
 import org.json.JSONObject;
 
 import com.alee.laf.WebLookAndFeel;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.steapps.Constant.ThreeChoice;
 
 import net.miginfocom.swing.MigLayout;
 
 public class STEApps {
 	
-	private JFrame frame;
+	private JFrame frmSteapps;
 	private JTextPane b4TextPaneUserList;
 	private JList b4JlistUserList;	
 	private JTextField b4TextFieldNama;
@@ -58,6 +50,40 @@ public class STEApps {
 	private JTextField b4TextFieldNoTelp;
 	private JTextArea b3TextAreaUserDetailRaw;
 	private JList b2JlistPost;
+	private JTextArea b2TextAreaPostRaw;
+	private JCheckBox f_chckbxHelm;
+	private JCheckBox f_chckbxSafetyShoes;
+	private JCheckBox f_chckbxSafetyGlasses;
+	private JCheckBox f_chckbxBodyVest;
+	private JCheckBox f_chckbxSarungTangan;
+	private JCheckBox f_chckbxDuskMask;
+	private JCheckBox f_chckbxApar;
+	private JCheckBox f_chckbxSkop;
+	private JCheckBox f_chckbxSapuLidi;
+	private JCheckBox f_chckbxSawDust;
+	private JCheckBox f_chckbxGps;
+	private JCheckBox f_chckbxLampuRotary;
+	private JCheckBox f_chckbxRambuPortable;
+	private JCheckBox f_chckbxKerucutPengaman;
+	private JCheckBox f_chckbxSegtigaPengaman;
+	private JCheckBox f_chckbxDongkrak;
+	private JCheckBox f_chckbxPitaPembatas;
+	private JCheckBox f_chckbxGansalRoda;
+	private JCheckBox f_chckbxKotakObat;
+	private JComboBox f_comboBoxKanan;
+	private JComboBox f_comboBoxKiri;
+	private JComboBox f_comboBoxDepan;
+	private JComboBox f_comboBoxBelakang;
+	private JTextField f_textFieldIjinB3;
+	private JTextField f_textFieldSim;
+	private JTextField f_textFieldKir;
+	private JTextField f_textFieldStnk;
+	private JTextField f_textFieldUjiEmisi;
+	private JTextField f_textFieldKetDokter;
+	private JCheckBox f_chckbxSertifikat;
+	private JCheckBox f_chckbxIdCard;
+	private JTextField f_textFieldCodeTruck;
+	private JTextPane b2JTextPanePostDetailRaw;
 
 	/**
 	 * Launch the application.
@@ -70,7 +96,7 @@ public class STEApps {
 				try {
 					WebLookAndFeel.install();
 					STEApps window = new STEApps();
-					window.frame.setVisible(true);
+					window.frmSteapps.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -105,10 +131,12 @@ public class STEApps {
 		// request user list to "use list panel"
 		FB.listenToUserList(b4JlistUserList);
 		
-		
+		// Listen  to Single click on user list
+		// by updating the user info panel
 		EventHandler.setSingleClickListener(b4JlistUserList, (Map<String, Object> params) -> {
 			String sel = (String) b4JlistUserList.getSelectedValue();			
 			
+			// Update the user info detail by sending request to Firebase Server
 			FB.listenToValueForSpecificPath(b4TextFieldNama, "/users/"+sel, (success, snapshot, error) -> {
 				final Map<String, String> asMap  = new HashMap<>();
 				final StringWriter asString  = new StringWriter();
@@ -116,7 +144,6 @@ public class STEApps {
 				if (success) {
 					asMap.putAll((Map<String, String>) snapshot.getValue()); 
 					asString.append(snapshot.getValue(true).toString().replaceAll("=", ":"));					
-					
 				} else {
 					asString.append(error.getMessage());
 				}
@@ -147,6 +174,83 @@ public class STEApps {
 			});
 		});
 		
+		
+		// Listen  to double click on user list
+		// by updating the user post list		
+		EventHandler.setDoubleClickListener(b4JlistUserList, (Map<String, Object> params) -> {
+			String sel = (String) b4JlistUserList.getSelectedValue();			
+			
+			FB.listenToValueForSpecificPath(
+				b2JlistPost, "/forms/" + sel, (boolean success, DataSnapshot snapshot, DatabaseError error) -> {					
+					
+					final Map<String, String> asMap  = new HashMap<>();
+					final StringWriter asString  = new StringWriter();					
+					
+					b2JlistPost.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);				
+					DefaultListModel<String> listModel = new DefaultListModel<String>();					
+					
+					if (snapshot.getChildrenCount() == 0) {
+						listModel.removeAllElements();
+					} else {
+						
+						if (success) {
+							asMap.putAll((Map<String, String>) snapshot.getValue()); 
+							asString.append(snapshot.getValue(true).toString().replaceAll("=", ":"));					
+						} else {
+							asString.append(error.getMessage());
+						}
+						
+						for (DataSnapshot snap: snapshot.getChildren()) {					
+							listModel.addElement(snap.getKey());
+						}
+					}				
+					
+					
+					SwingUtilities.invokeLater(() -> {												
+						b2JlistPost.setModel(listModel);												
+						b2JlistPost.revalidate();
+						b2JlistPost.repaint();
+						if (b2JlistPost.getModel().getSize() != 0) {
+							b2TextAreaPostRaw.setText(new JSONObject(asString.toString()).toString(4));
+						} else {
+							b2TextAreaPostRaw.setText(null);
+						}
+						
+					});
+			});
+		});
+		
+		EventHandler.setSingleClickListener(b2JlistPost, (Map<String, Object> params) -> {
+			String selUser = (String) b4JlistUserList.getSelectedValue();
+			String selPost = (String) b2JlistPost.getSelectedValue();
+			FB.listenToValueForSpecificPath(f_chckbxHelm, "/forms/" + selUser + "/" + selPost, 
+				(boolean success, DataSnapshot snapshot, DatabaseError error) -> {
+					final Map<String, Object> asMap  = new HashMap<>();
+					final StringWriter asString  = new StringWriter();					
+					
+					b2JlistPost.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);				
+					DefaultListModel<String> listModel = new DefaultListModel<String>();	
+					
+								
+					if (success) {
+						asMap.putAll((Map<String, Object>) snapshot.getValue()); 
+						asString.append(snapshot.getValue(true).toString().replaceAll("=", ":"));					
+					} else {
+						asString.append(error.getMessage());
+					}
+					
+					SwingUtilities.invokeLater(() -> {
+						if (success) {
+							updatePostDetailForm(asMap, null, asString.toString());
+						} else {							
+							updatePostDetailForm(asMap, "ERROR", asString.toString());
+						}												
+						
+					});
+				}
+			);
+		}); 
+		
 		FB.listenToValueForSpecificPath(b4TextPaneUserList, "/users/", (success, snapshot, error) -> {
 			StringWriter writer = new StringWriter();
 			if (success) {				
@@ -160,51 +264,342 @@ public class STEApps {
 		
 		
 	}
+	
+	private void updatePostDetailForm(Map<String, Object> map, String mapDefValue ,String json) {
+		// FROM APD DRIVER
+		f_chckbxHelm.setSelected((Boolean)map.get(DBKey.FORM_APD_HELM));
+		f_chckbxSafetyShoes.setSelected((Boolean)map.get(DBKey.FORM_APD_SAFETY_SHOES));
+		f_chckbxSafetyGlasses.setSelected((Boolean)map.get(DBKey.FORM_APD_SAFETY_GLASSES));
+		f_chckbxBodyVest.setSelected((Boolean)map.get(DBKey.FORM_APD_BODY_VEST));
+		f_chckbxSarungTangan.setSelected((Boolean)map.get(DBKey.FORM_APD_SARUNG_TANGAN));
+		f_chckbxDuskMask.setSelected((Boolean)map.get(DBKey.FORM_APD_DUSK_MASK));
+		
+		// FROM KELENGKAPAN KENDARAAN
+		f_chckbxApar.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_APAR));
+		f_chckbxSkop.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_SPILL_SKOP));
+		f_chckbxSapuLidi.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_SPILL_SAPU_LIDI));
+		f_chckbxSawDust.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_SPILL_SAW_DUST));
+		f_chckbxGps.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_GPS));
+		f_chckbxLampuRotary.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_LAMPU_ROTARY));
+		f_chckbxRambuPortable.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_RAMBU_PORTABLE));
+		f_chckbxKerucutPengaman.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_KERUCUT_PENGAMAN));
+		f_chckbxSegtigaPengaman.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_SEGITIGA_PENGAMAN));
+		f_chckbxDongkrak.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_DONGKRAK));
+		f_chckbxPitaPembatas.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_PITA_PEMBATAS));
+		f_chckbxGansalRoda.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_GANSAL_RODA));
+		f_chckbxKotakObat.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_KOTAK_OBAT));
+		
+		// FROM PLACARD
+		f_comboBoxKanan.setSelectedIndex(((Long)map.get(DBKey.FORM_PLACARD_KANAN)).intValue());
+		f_comboBoxKiri.setSelectedIndex(((Long)map.get(DBKey.FORM_PLACARD_KIRI)).intValue());
+		f_comboBoxDepan.setSelectedIndex(((Long)map.get(DBKey.FORM_PLACARD_DEPAN)).intValue());
+		f_comboBoxBelakang.setSelectedIndex(((Long)map.get(DBKey.FORM_PLACARD_BELAKANG)).intValue());
+		
+		// FROM SURAT DAN MASA BERLAKU
+		f_textFieldIjinB3.setText((String) map.get(DBKey.FORM_SRT_BERLAKU_IJIN_B3));
+		f_textFieldSim.setText((String) map.get(DBKey.FORM_SRT_BERLAKU_SIM));
+		f_textFieldKir.setText((String) map.get(DBKey.FORM_SRT_BERLAKU_KIR));
+		f_textFieldStnk.setText((String) map.get(DBKey.FORM_SRT_BERLAKU_STNK));
+		f_textFieldUjiEmisi.setText((String) map.get(DBKey.FORM_SRT_BERLAKU_UJI_EMISI));
+		f_textFieldKetDokter.setText((String) map.get(DBKey.FORM_SRT_BERLAKU_KET_DOKTER));
+		f_chckbxSertifikat.setSelected((Boolean)map.get(DBKey.FORM_SRT_BERLAKU_SERTIFIKAT));
+		f_chckbxIdCard.setSelected((Boolean)map.get(DBKey.FORM_SRT_BERLAKU_IDCARD));
+		
+		// FROM CODE TRUCK
+		f_textFieldCodeTruck.setText((String) map.get(DBKey.FORM_TRUCK_CODE));
+		
+		b2JTextPanePostDetailRaw.setText(new JSONObject(json).toString(4));
+	}
 
 	/**
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		frame = new JFrame();
-		frame.setResizable(false);
-		frame.setBounds(100, 100, 1080, 720);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(null);
+		frmSteapps = new JFrame();
+		frmSteapps.setTitle("STEApps");
+		frmSteapps.setResizable(false);
+		frmSteapps.setBounds(100, 100, 1080, 720);
+		frmSteapps.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frmSteapps.getContentPane().setLayout(null);
 		
 		JToolBar toolBar = new JToolBar();
 		toolBar.setBounds(7, 7, 84, 16);
-		frame.getContentPane().add(toolBar);
+		frmSteapps.getContentPane().add(toolBar);
 		
 		JTabbedPane b1TabPaneUserPost = new JTabbedPane(JTabbedPane.BOTTOM);
 		b1TabPaneUserPost.setBorder(new TitledBorder(null, "User Post", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		b1TabPaneUserPost.setBounds(7, 23, 503, 400);
-		frame.getContentPane().add(b1TabPaneUserPost);		
+		frmSteapps.getContentPane().add(b1TabPaneUserPost);		
 		
 		b2JlistPost  = new JList();
 		JScrollPane _b2JScrollPostGui = new JScrollPane(b2JlistPost);
 		b1TabPaneUserPost.addTab("Graphical", null, _b2JScrollPostGui, null);
 		
 		
-		JTextArea b2TextAreaPostRaw = new JTextArea();
+		b2TextAreaPostRaw = new JTextArea();
 		JScrollPane _b2JScrollPostRaw = new JScrollPane(b2TextAreaPostRaw);
 		b1TabPaneUserPost.addTab("Raw", null, _b2JScrollPostRaw, null);		
 		
 		
-		JTabbedPane b1TabbedPanelPostDetail = new JTabbedPane();
-		b1TabbedPanelPostDetail.setBorder(new TitledBorder(null, "Post Details", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		b1TabbedPanelPostDetail.setTabPlacement(JTabbedPane.BOTTOM);
-		b1TabbedPanelPostDetail.setBounds(512, 23, 557, 400);
-		frame.getContentPane().add(b1TabbedPanelPostDetail);
+		JTabbedPane b1TabPanelPostDetail = new JTabbedPane();
+		b1TabPanelPostDetail.setBorder(new TitledBorder(null, "Post Details", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		b1TabPanelPostDetail.setTabPlacement(JTabbedPane.BOTTOM);
+		b1TabPanelPostDetail.setBounds(512, 23, 557, 400);
+		frmSteapps.getContentPane().add(b1TabPanelPostDetail);
 		
-		JPanel panel = new JPanel();
-		b1TabbedPanelPostDetail.addTab("New tab", null, panel, null);
+		JPanel b2PanelPostDetailGui  = new JPanel();
+		JScrollPane _b2ScrollPanePostDetailGui = new JScrollPane(b2PanelPostDetailGui);
+		_b2ScrollPanePostDetailGui.getVerticalScrollBar().setUnitIncrement(25);
+		b2PanelPostDetailGui.setLayout(new BoxLayout(b2PanelPostDetailGui, BoxLayout.Y_AXIS));
 		
-		JPanel panel_1 = new JPanel();
-		b1TabbedPanelPostDetail.addTab("New tab", null, panel_1, null);
+		JPanel panelApd = new JPanel();
+		panelApd.setBorder(new TitledBorder(null, "Kelengkapan APD Driver", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		
+		b2PanelPostDetailGui.add(panelApd);
+		panelApd.setLayout(new MigLayout("", "[125.00][grow]", "[][][][][][]"));
+		
+		JLabel lblHelm = new JLabel("Helm");
+		panelApd.add(lblHelm, "cell 0 0");
+		
+		f_chckbxHelm = new JCheckBox("Ada");
+		panelApd.add(f_chckbxHelm, "cell 1 0");
+		
+		JLabel lblSafetyShoes = new JLabel("Safety Shoes");
+		panelApd.add(lblSafetyShoes, "cell 0 1");
+		
+		f_chckbxSafetyShoes = new JCheckBox("Ada");
+		panelApd.add(f_chckbxSafetyShoes, "cell 1 1");
+		
+		JLabel lblSafetyGlasses = new JLabel("Safety Glasses");
+		panelApd.add(lblSafetyGlasses, "cell 0 2");
+		
+		f_chckbxSafetyGlasses = new JCheckBox("Ada");
+		panelApd.add(f_chckbxSafetyGlasses, "cell 1 2");
+		
+		JLabel lblBodyVest = new JLabel("Body Vest");
+		panelApd.add(lblBodyVest, "cell 0 3");
+		
+		f_chckbxBodyVest = new JCheckBox("Ada");
+		panelApd.add(f_chckbxBodyVest, "cell 1 3");
+		
+		JLabel lblSarungTangan = new JLabel("Sarung Tangan");
+		panelApd.add(lblSarungTangan, "cell 0 4");
+		
+		f_chckbxSarungTangan = new JCheckBox("Ada");
+		panelApd.add(f_chckbxSarungTangan, "cell 1 4");
+		
+		JLabel lblDuskMask = new JLabel("Dusk mask");
+		panelApd.add(lblDuskMask, "cell 0 5");
+		
+		f_chckbxDuskMask = new JCheckBox("Ada");
+		panelApd.add(f_chckbxDuskMask, "cell 1 5");
+		
+		JPanel panelKelengkapanKendaraan = new JPanel();
+		panelKelengkapanKendaraan.setBorder(new TitledBorder(null, "Kelengkapan Kendaraan", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		b2PanelPostDetailGui.add(panelKelengkapanKendaraan);
+		panelKelengkapanKendaraan.setLayout(new MigLayout("", "[125.00,leading][grow]", "[][grow][][][][]"));
+		
+		JLabel lblApar = new JLabel("Apar");
+		panelKelengkapanKendaraan.add(lblApar, "cell 0 0");
+		
+		f_chckbxApar = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxApar, "cell 1 0");
+		
+		JPanel panelSpillKits = new JPanel();
+		panelSpillKits.setBorder(new TitledBorder(null, "Spill Kits", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panelKelengkapanKendaraan.add(panelSpillKits, "cell 0 1 2 1,grow");
+		panelSpillKits.setLayout(new MigLayout("", "[112.00][grow]", "[][][]"));
+		
+		JLabel lblSkop = new JLabel("Skop");
+		panelSpillKits.add(lblSkop, "cell 0 0");
+		
+		f_chckbxSkop = new JCheckBox("Ada");
+		panelSpillKits.add(f_chckbxSkop, "cell 1 0");
+		
+		JLabel lblSapuLidi = new JLabel("Sapu Lidi");
+		panelSpillKits.add(lblSapuLidi, "cell 0 1");
+		
+		f_chckbxSapuLidi = new JCheckBox("Ada");
+		panelSpillKits.add(f_chckbxSapuLidi, "cell 1 1");
+		
+		JLabel lblSawDust = new JLabel("Saw Dust");
+		panelSpillKits.add(lblSawDust, "cell 0 2");
+		
+		f_chckbxSawDust = new JCheckBox("Ada");
+		panelSpillKits.add(f_chckbxSawDust, "cell 1 2");
+		
+		JLabel lblGps = new JLabel("GPS");
+		panelKelengkapanKendaraan.add(lblGps, "cell 0 2");
+		
+		f_chckbxGps = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxGps, "cell 1 2");
+		
+		JLabel lblLampuRotary = new JLabel("Lampu Rotary");
+		panelKelengkapanKendaraan.add(lblLampuRotary, "cell 0 3");
+		
+		f_chckbxLampuRotary = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxLampuRotary, "cell 1 3");
+		
+		JLabel lblRambuPortable = new JLabel("Rambu Portable");
+		panelKelengkapanKendaraan.add(lblRambuPortable, "cell 0 4");
+		
+		f_chckbxRambuPortable = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxRambuPortable, "cell 1 4");
+		
+		JLabel lblKerucutPengaman = new JLabel("Kerucut Pengaman");
+		panelKelengkapanKendaraan.add(lblKerucutPengaman, "cell 0 5");
+		
+		f_chckbxKerucutPengaman = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxKerucutPengaman, "cell 1 5");
+		
+		JLabel lblSegitigaPengaman = new JLabel("Segitiga Pengaman");
+		panelKelengkapanKendaraan.add(lblSegitigaPengaman, "cell 0 6");
+		
+		f_chckbxSegtigaPengaman = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxSegtigaPengaman, "cell 1 6");
+		
+		JLabel lblDongkrak = new JLabel("Dongkrak");
+		panelKelengkapanKendaraan.add(lblDongkrak, "cell 0 7");
+		
+		f_chckbxDongkrak = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxDongkrak, "cell 1 7");
+		
+		JLabel lblPitaPembatas = new JLabel("Pita Pembatas");
+		panelKelengkapanKendaraan.add(lblPitaPembatas, "cell 0 8");
+		
+		f_chckbxPitaPembatas = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxPitaPembatas, "cell 1 8");
+		
+		JLabel lblGansalRoda = new JLabel("Gansal Roda");
+		panelKelengkapanKendaraan.add(lblGansalRoda, "cell 0 9");
+		
+		f_chckbxGansalRoda = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxGansalRoda, "cell 1 9");
+		
+		JLabel lblKotakObat = new JLabel("Kotak Obat");
+		panelKelengkapanKendaraan.add(lblKotakObat, "cell 0 10");
+		
+		f_chckbxKotakObat = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxKotakObat, "cell 1 10");
+		
+		JPanel panelPlacard = new JPanel();
+		panelPlacard.setBorder(new TitledBorder(null, "Placard", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		b2PanelPostDetailGui.add(panelPlacard);
+		panelPlacard.setLayout(new MigLayout("", "[129.00][118.00,grow,fill]", "[][][][]"));
+		
+		JLabel lblKanan = new JLabel("Kanan");
+		panelPlacard.add(lblKanan, "cell 0 0,alignx leading");
+		
+		f_comboBoxKanan = new JComboBox();
+		f_comboBoxKanan.setModel(new DefaultComboBoxModel(ThreeChoice.values()));
+		panelPlacard.add(f_comboBoxKanan, "cell 1 0,growx");
+		
+		JLabel lblKiri = new JLabel("Kiri");
+		panelPlacard.add(lblKiri, "cell 0 1,alignx leading");
+		
+		f_comboBoxKiri = new JComboBox();
+		f_comboBoxKiri.setModel(new DefaultComboBoxModel(ThreeChoice.values()));
+		panelPlacard.add(f_comboBoxKiri, "cell 1 1,growx");
+		
+		JLabel lblDepan = new JLabel("Depan");
+		panelPlacard.add(lblDepan, "cell 0 2,alignx leading");
+		
+		f_comboBoxDepan = new JComboBox();
+		f_comboBoxDepan.setModel(new DefaultComboBoxModel(ThreeChoice.values()));
+		panelPlacard.add(f_comboBoxDepan, "cell 1 2,growx");
+		
+		JLabel lblBelakang = new JLabel("Belakang");
+		panelPlacard.add(lblBelakang, "cell 0 3,alignx leading");
+		
+		f_comboBoxBelakang = new JComboBox();
+		f_comboBoxBelakang.setModel(new DefaultComboBoxModel(ThreeChoice.values()));
+		panelPlacard.add(f_comboBoxBelakang, "cell 1 3,growx");		
+		
+		b2PanelPostDetailGui.add(panelPlacard, "cell 0 2,grow");
+		
+		JPanel panelSuratDanBerlaku = new JPanel();
+		panelSuratDanBerlaku.setBorder(new TitledBorder(null, "Surat & Masa Berlaku", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		b2PanelPostDetailGui.add(panelSuratDanBerlaku);
+		panelSuratDanBerlaku.setLayout(new MigLayout("", "[125.00][grow]", "[][][][][][][][]"));
+		
+		JLabel lblIjinB = new JLabel("Ijin B3");
+		panelSuratDanBerlaku.add(lblIjinB, "cell 0 0,alignx leading");
+		
+		f_textFieldIjinB3 = new JTextField();
+		panelSuratDanBerlaku.add(f_textFieldIjinB3, "cell 1 0,growx");
+		f_textFieldIjinB3.setColumns(10);
+		
+		JLabel lblSim = new JLabel("SIM");
+		panelSuratDanBerlaku.add(lblSim, "cell 0 1,alignx leading");
+		
+		f_textFieldSim = new JTextField();
+		panelSuratDanBerlaku.add(f_textFieldSim, "cell 1 1,growx");
+		f_textFieldSim.setColumns(10);
+		
+		JLabel lblKir = new JLabel("KIR");
+		panelSuratDanBerlaku.add(lblKir, "cell 0 2,alignx leading");
+		
+		f_textFieldKir = new JTextField();
+		panelSuratDanBerlaku.add(f_textFieldKir, "cell 1 2,growx");
+		f_textFieldKir.setColumns(10);
+		
+		JLabel lblStnk = new JLabel("STNK");
+		panelSuratDanBerlaku.add(lblStnk, "cell 0 3,alignx leading");
+		
+		f_textFieldStnk = new JTextField();
+		panelSuratDanBerlaku.add(f_textFieldStnk, "cell 1 3,growx");
+		f_textFieldStnk.setColumns(10);
+		
+		JLabel lblUjiEmisi = new JLabel("Uji Emisi");
+		panelSuratDanBerlaku.add(lblUjiEmisi, "cell 0 4,alignx leading");
+		
+		f_textFieldUjiEmisi = new JTextField();
+		panelSuratDanBerlaku.add(f_textFieldUjiEmisi, "cell 1 4,growx");
+		f_textFieldUjiEmisi.setColumns(10);
+		
+		JLabel lblKetDokter = new JLabel("Ket. Dokter");
+		panelSuratDanBerlaku.add(lblKetDokter, "cell 0 5,alignx leading");
+		
+		f_textFieldKetDokter = new JTextField();
+		panelSuratDanBerlaku.add(f_textFieldKetDokter, "cell 1 5,growx");
+		f_textFieldKetDokter.setColumns(10);
+		
+		JLabel lblSertifikat = new JLabel("Sertifikat");
+		panelSuratDanBerlaku.add(lblSertifikat, "cell 0 6,alignx leading");
+		
+		f_chckbxSertifikat = new JCheckBox("Ada");
+		panelSuratDanBerlaku.add(f_chckbxSertifikat, "cell 1 6");
+		
+		JLabel lblIdCard = new JLabel("ID Card");
+		panelSuratDanBerlaku.add(lblIdCard, "cell 0 7,alignx leading");
+		
+		f_chckbxIdCard = new JCheckBox("Ada");
+		panelSuratDanBerlaku.add(f_chckbxIdCard, "cell 1 7");
+		
+		b2PanelPostDetailGui.add(panelSuratDanBerlaku);
+		
+		JPanel panelCodeTruck = new JPanel();
+		panelCodeTruck.setBorder(new TitledBorder(null, "Code Truck", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		b2PanelPostDetailGui.add(panelCodeTruck);
+		panelCodeTruck.setLayout(new MigLayout("", "[125.00][grow]", "[]"));
+		
+		JLabel lblCodeTruck = new JLabel("Code Truck");
+		panelCodeTruck.add(lblCodeTruck, "cell 0 0,alignx leading");
+		
+		f_textFieldCodeTruck = new JTextField();
+		panelCodeTruck.add(f_textFieldCodeTruck, "cell 1 0,growx");
+		f_textFieldCodeTruck.setColumns(10);
+		
+		b2PanelPostDetailGui.add(panelCodeTruck);
+		b1TabPanelPostDetail.addTab("Graphical", null, _b2ScrollPanePostDetailGui, null);		
+		
+		b2JTextPanePostDetailRaw = new JTextPane();
+		JScrollPane _b2ScrollPanePostDetailRaw = new JScrollPane(b2JTextPanePostDetailRaw);
+		b1TabPanelPostDetail.addTab("Raw", null, _b2ScrollPanePostDetailRaw, null);
 		
 		JPanel b1PanelUserDetail = new JPanel();
 		b1PanelUserDetail.setBounds(512, 434, 555, 246);
-		frame.getContentPane().add(b1PanelUserDetail);
+		frmSteapps.getContentPane().add(b1PanelUserDetail);
 		b1PanelUserDetail.setLayout(new BorderLayout(0, 0));
 		
 		JTabbedPane b2TabbedPanelDetails = new JTabbedPane(JTabbedPane.BOTTOM);		
@@ -283,7 +678,7 @@ public class STEApps {
 		
 		JPanel b1PanelUserList = new JPanel();
 		b1PanelUserList.setBounds(7, 434, 497, 246);
-		frame.getContentPane().add(b1PanelUserList);
+		frmSteapps.getContentPane().add(b1PanelUserList);
 		b1PanelUserList.setLayout(new BorderLayout(0, 0));
 		
 		JTabbedPane b2TabbedPanelUserList = new JTabbedPane(JTabbedPane.BOTTOM);
@@ -306,204 +701,3 @@ public class STEApps {
 	}
 }
 
-
-class FB {
-	
-	
-	interface FbCallback {
-		void onDone(boolean success, DataSnapshot snapshot, DatabaseError erorr);
-	}
-	
-	private static String KEY_FB_LISTENER = "fb-listener";
-	
-	
-	static FirebaseDatabase sFbInstance;
-	
-	static void setupFirebase() {
-		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-		File file = new File(classLoader.getResource("steapps-50634-firebase-adminsdk-qkku2-516454a8d6.json").getFile());
-		System.out.println(file);
-		FileInputStream certificate = null;
-		try {
-			certificate = new FileInputStream(file);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		FirebaseOptions options = null;
-		try {
-			options = new FirebaseOptions.Builder()
-			  .setCredential(FirebaseCredentials.fromCertificate(certificate))
-			  .setDatabaseUrl("https://steapps-50634.firebaseio.com/")
-			  .build();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		FirebaseApp.initializeApp(options);		
-		sFbInstance = FirebaseDatabase.getInstance();
-	}
-	
-	static void listenToForm(JTree tree) {
-		
-		/*DatabaseReference formRef = sFbInstance.getReference("/forms/A");
-		formRef.addListenerForSingleValueEvent(new ValueEventListener() {
-			
-			public void onDataChange(DataSnapshot snapshot) {				
-				Map<String, ?> map = (Map<String, ?>) snapshot.getValue();				
-				DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
-				root.add(new DefaultMutableTreeNode());
-				System.out.println(new JSONObject(map));
-				
-				//tree.setModel(new DefaultTreeModel(root));				
-				
-			}
-			
-			public void onCancelled(DatabaseError error) {
-				// TODO Auto-generated method stub
-				
-			}
-		});*/
-	}
-	
-	static void listenToValueForSpecificPath(JComponent c, String fbPath, FbCallback callback) {
-		ValueEventListener vel = (ValueEventListener) c.getClientProperty(KEY_FB_LISTENER);
-		
-		if (vel == null) {
-			vel = new ValueEventListener() {
-				
-				@Override
-				public void onDataChange(DataSnapshot snapshot) {
-					callback.onDone(true, snapshot, null);
-					
-				}
-				
-				@Override
-				public void onCancelled(DatabaseError error) {
-					callback.onDone(false, null, error);
-					
-				}
-			};
-		}
-		
-		sFbInstance.getReference(fbPath).addValueEventListener(vel);
-		c.putClientProperty(KEY_FB_LISTENER, vel); 	// store the reference of the listener, 
-													// in case we wanted to remove the listener later time
-
-		
-	};
-	
-	static void unlistenToValueForSpecificPath(JComponent c, String path, boolean deleteListener) {		 
-		sFbInstance.getReference(path).removeEventListener((ValueEventListener) c.getClientProperty(KEY_FB_LISTENER));
-		if (deleteListener) {
-			c.putClientProperty(KEY_FB_LISTENER, null); // remove the listener
-		}
-	}
-	
-	
-	
-	static void listenToUserList(final JList<String> jlist) {		 
-		DatabaseReference userRef = sFbInstance.getReference("/users");
-		
-		ValueEventListener vel = (ValueEventListener) jlist.getClientProperty(KEY_FB_LISTENER);
-		
-		if (vel == null) {
-			vel = new ValueEventListener() {
-				
-				public void onDataChange(DataSnapshot snapshot) {				
-					jlist.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);				
-					DefaultListModel<String> listModel = new DefaultListModel<String>();								
-					for (DataSnapshot snap: snapshot.getChildren()) {					
-						listModel.addElement(snap.getKey());
-					}
-					
-					SwingUtilities.invokeLater(()->{						
-						jlist.setModel(listModel);
-						jlist.revalidate();
-						jlist.repaint();
-					});
-				}
-				
-				public void onCancelled(DatabaseError error) {
-					// TODO Auto-generated method stub
-					
-				}
-			};
-		}
-		userRef.addListenerForSingleValueEvent(vel);
-		
-		jlist.putClientProperty(KEY_FB_LISTENER, vel); 	// store the reference of the listener, 
-														// in case we wanted to remove the listener later time
-		
-	}
-	
-	static void unlistenToUserList(final JList<String> jlist, boolean deleteListener) {
-		DatabaseReference userRef = sFbInstance.getReference("/users");
-		userRef.removeEventListener((ValueEventListener) jlist.getClientProperty(KEY_FB_LISTENER));
-		if (deleteListener) {
-			jlist.putClientProperty(KEY_FB_LISTENER, null); // remove the listener
-		}
-		
-	}
-}
-
-class EventHandler {
-	
-	interface OnEvent {
-		
-		public static final String EVENT_TYPE_MOUSE = "mouse"; 
-		public static final String EVENT_TYPE = "type";
-		public static final String EVENT_SOURCE = "source";
-		
-		void dispatch(Map<String, Object> params);
-	}
-	
-	public static void setSingleClickListener(JComponent c, OnEvent onEvent) {
-		final String objectKey = "mouse-single-click";
-		
-		// check if the component ever had a listener, remove it if true
-		MouseAdapter prevMa = (MouseAdapter) c.getClientProperty(objectKey);
-		if ( prevMa != null) {
-			c.removeMouseListener(prevMa);
-		}
-				
-		MouseAdapter ma = new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 1) {
-					Map<String, Object> map = new HashMap<>();
-					map.put(OnEvent.EVENT_SOURCE, e);
-					onEvent.dispatch(map);
-					map = null;
-				}
-			}
-		};
-		c.addMouseListener(ma);
-		c.putClientProperty(objectKey, ma);
-	}
-	
-	public static void setDoubleClickListener(JComponent c, OnEvent onEvent) {
-		final String objectKey = "mouse-double-click";
-		
-		// check if the component ever had a listener, remove it if true
-		MouseAdapter prevMa = (MouseAdapter) c.getClientProperty(objectKey);
-		if ( prevMa != null) {
-			c.removeMouseListener(prevMa);
-		}
-		MouseAdapter ma = new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-					Map<String, Object> map = new HashMap<>();
-					map.put(OnEvent.EVENT_SOURCE, e);
-					onEvent.dispatch(map);
-					map = null;
-				}
-			}
-		};
-		c.addMouseListener(ma);
-		c.putClientProperty(objectKey, ma);
-	}
-}
