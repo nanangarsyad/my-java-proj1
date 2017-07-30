@@ -466,6 +466,8 @@ public class STEApps {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+		
 		frmSteapps = new JFrame();
 		frmSteapps.setTitle("STEApps");
 		frmSteapps.setResizable(false);
@@ -473,6 +475,8 @@ public class STEApps {
 		frmSteapps.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmSteapps.getContentPane().setLayout(new CardLayout());
 		
+		ImageIcon iconApps = new ImageIcon(classLoader.getResource("ico.png"));
+		frmSteapps.setIconImage(iconApps.getImage());
 		
 		
 		JPanel panelLogin = new JPanel();
@@ -487,9 +491,8 @@ public class STEApps {
 		JPanel _panelLogin = new JPanel();
 		_panelLogin.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		panelLogin.add(_panelLogin, BorderLayout.CENTER);
-		_panelLogin.setLayout(new MigLayout("", "[grow][108.00][171.00][grow]", "[grow][][][][][][][grow]"));
+		_panelLogin.setLayout(new MigLayout("", "[grow][108.00][171.00][grow]", "[grow][][][][][][][grow]"));		
 		
-		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 		ImageIcon icon = new ImageIcon(classLoader.getResource("logo.png"));
 		JLabel lblLogo = new JLabel(icon);
 		_panelLogin.add(lblLogo, "cell 1 1 2 1,alignx center");
