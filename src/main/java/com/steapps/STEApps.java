@@ -1,28 +1,48 @@
 package com.steapps;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Dialog.ModalityType;
+import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
-import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import org.json.JSONObject;
@@ -33,10 +53,63 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.steapps.Constant.ThreeChoice;
+import com.steapps.Post.PostEntry;
 
 import net.miginfocom.swing.MigLayout;
+import javax.swing.JPasswordField;
+
+
+class ShowWaitAction extends AbstractAction {
+	   protected static final long SLEEP_TIME = 3 * 1000;
+
+	   public ShowWaitAction(String name) {
+	      super(name);
+	   }
+
+	   @Override
+	   public void actionPerformed(ActionEvent evt) {
+	      SwingWorker<Void, Void> mySwingWorker = new SwingWorker<Void, Void>(){
+	         @Override
+	         protected Void doInBackground() throws Exception {
+
+	            // mimic some long-running process here...
+	            Thread.sleep(SLEEP_TIME);
+	            return null;
+	         }
+	      };
+
+	      Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
+	      final JDialog dialog = new JDialog(win, "Dialog", ModalityType.APPLICATION_MODAL);
+
+	      mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
+
+	         @Override
+	         public void propertyChange(PropertyChangeEvent evt) {
+	            if (evt.getPropertyName().equals("state")) {
+	               if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
+	                  dialog.dispose();
+	               }
+	            }
+	         }
+	      });
+	      mySwingWorker.execute();
+
+	      JProgressBar progressBar = new JProgressBar();
+	      progressBar.setIndeterminate(true);
+	      JPanel panel = new JPanel(new BorderLayout());
+	      panel.add(progressBar, BorderLayout.CENTER);
+	      panel.add(new JLabel("Please wait......."), BorderLayout.PAGE_START);
+	      dialog.add(panel);
+	      dialog.pack();
+	      dialog.setLocationRelativeTo(win);
+	      dialog.setVisible(true);
+	   }
+	}
 
 public class STEApps {
+	
+	private static final String PANEL_MAIN = "panel-main";
+	private static final String PANEL_LOGIN = "panel-login";
 	
 	private JFrame frmSteapps;
 	private JTextPane b4TextPaneUserList;
@@ -49,7 +122,7 @@ public class STEApps {
 	private JTextField b4TextFieldEmail;
 	private JTextField b4TextFieldNoTelp;
 	private JTextArea b3TextAreaUserDetailRaw;
-	private JList b2JlistPost;
+	private JList<PostEntry> b2JlistPost;
 	private JTextArea b2TextAreaPostRaw;
 	private JCheckBox f_chckbxHelm;
 	private JCheckBox f_chckbxSafetyShoes;
@@ -68,7 +141,7 @@ public class STEApps {
 	private JCheckBox f_chckbxSegtigaPengaman;
 	private JCheckBox f_chckbxDongkrak;
 	private JCheckBox f_chckbxPitaPembatas;
-	private JCheckBox f_chckbxGansalRoda;
+	private JCheckBox f_chckbxGanjalRoda;
 	private JCheckBox f_chckbxKotakObat;
 	private JComboBox f_comboBoxKanan;
 	private JComboBox f_comboBoxKiri;
@@ -84,6 +157,9 @@ public class STEApps {
 	private JCheckBox f_chckbxIdCard;
 	private JTextField f_textFieldCodeTruck;
 	private JTextPane b2JTextPanePostDetailRaw;
+	private JButton btnLogin;
+	private JPasswordField textFieldAdminPass;
+	private JTextField textFieldAdminName;
 
 	/**
 	 * Launch the application.
@@ -128,6 +204,40 @@ public class STEApps {
 	
 	private void setupGui() {
 		
+		// Login GUI
+		btnLogin.setAction(new ShowWaitAction("Log in"));	
+		btnLogin.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {				
+
+				
+				FB.listenToValueForSpecificPath(btnLogin, "/admins/", (success, snapshot, error) -> {
+					String adminName = textFieldAdminName.getText();
+					String adminPass = textFieldAdminPass.getText();
+					if (success) {
+						for (DataSnapshot snapChild : snapshot.getChildren()) {
+							Map<String, String> map = (Map<String, String>) snapChild.getValue();
+							if (adminName.equals(map.get(DBKey.ADMIN_USERNAME)) 
+									&& adminPass.equals(map.get(DBKey.ADMIN_PASSWORD))) {
+								
+								// Show main panel
+								SwingUtilities.invokeLater(() -> {									
+									((CardLayout)frmSteapps.getContentPane().getLayout()).show(frmSteapps.getContentPane(), PANEL_MAIN);									
+								});
+								return;
+								
+							}
+						}
+					}
+					
+					SwingUtilities.invokeLater(() -> {						
+						JOptionPane.showMessageDialog(frmSteapps, "Failed. Either Username or Password is Wrong", "Warning", JOptionPane.WARNING_MESSAGE);
+					});
+					
+				});
+			}
+		});
+		
+		
 		// request user list to "use list panel"
 		FB.listenToUserList(b4JlistUserList);
 		
@@ -143,9 +253,13 @@ public class STEApps {
 				
 				if (success) {
 					asMap.putAll((Map<String, String>) snapshot.getValue()); 
-					asString.append(snapshot.getValue(true).toString().replaceAll("=", ":"));					
-				} else {
-					asString.append(error.getMessage());
+					asString.append(new JSONObject(asMap).toString(4));					
+				} else {					
+					JSONObject json = new JSONObject();
+					json.put("error", error.getMessage());
+					asString.append(json.toString(4));
+					
+				
 				}
 				
 				SwingUtilities.invokeLater(() -> {
@@ -169,7 +283,7 @@ public class STEApps {
 					}
 					
 					
-					b3TextAreaUserDetailRaw.setText(new JSONObject(asString.toString()).toString(4));
+					b3TextAreaUserDetailRaw.setText(asString.toString());
 				});
 			});
 		});
@@ -187,7 +301,7 @@ public class STEApps {
 					final StringWriter asString  = new StringWriter();					
 					
 					b2JlistPost.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);				
-					DefaultListModel<String> listModel = new DefaultListModel<String>();					
+					DefaultListModel<Post.PostEntry> listModel = new DefaultListModel<>();					
 					
 					if (snapshot.getChildrenCount() == 0) {
 						listModel.removeAllElements();
@@ -195,13 +309,16 @@ public class STEApps {
 						
 						if (success) {
 							asMap.putAll((Map<String, String>) snapshot.getValue()); 
-							asString.append(snapshot.getValue(true).toString().replaceAll("=", ":"));					
-						} else {
-							asString.append(error.getMessage());
+							asString.append(new JSONObject(asMap).toString(4));					
+						} else {					
+							JSONObject json = new JSONObject();
+							json.put("error", error.getMessage());
+							asString.append(json.toString(4));						
 						}
 						
-						for (DataSnapshot snap: snapshot.getChildren()) {					
-							listModel.addElement(snap.getKey());
+						for (DataSnapshot snap: snapshot.getChildren()) {
+							PostEntry entry = new Post.PostEntry(snap.getKey());
+							listModel.addElement(entry);
 						}
 					}				
 					
@@ -211,7 +328,7 @@ public class STEApps {
 						b2JlistPost.revalidate();
 						b2JlistPost.repaint();
 						if (b2JlistPost.getModel().getSize() != 0) {
-							b2TextAreaPostRaw.setText(new JSONObject(asString.toString()).toString(4));
+							b2TextAreaPostRaw.setText(asString.toString());
 						} else {
 							b2TextAreaPostRaw.setText(null);
 						}
@@ -222,8 +339,8 @@ public class STEApps {
 		
 		EventHandler.setSingleClickListener(b2JlistPost, (Map<String, Object> params) -> {
 			String selUser = (String) b4JlistUserList.getSelectedValue();
-			String selPost = (String) b2JlistPost.getSelectedValue();
-			FB.listenToValueForSpecificPath(f_chckbxHelm, "/forms/" + selUser + "/" + selPost, 
+			PostEntry selPost = (PostEntry) b2JlistPost.getSelectedValue();
+			FB.listenToValueForSpecificPath(f_chckbxHelm, "/forms/" + selUser + "/" + selPost.asTime, 
 				(boolean success, DataSnapshot snapshot, DatabaseError error) -> {
 					final Map<String, Object> asMap  = new HashMap<>();
 					final StringWriter asString  = new StringWriter();					
@@ -233,10 +350,12 @@ public class STEApps {
 					
 								
 					if (success) {
-						asMap.putAll((Map<String, Object>) snapshot.getValue()); 
-						asString.append(snapshot.getValue(true).toString().replaceAll("=", ":"));					
-					} else {
-						asString.append(error.getMessage());
+						asMap.putAll((Map<String, String>) snapshot.getValue()); 
+						asString.append(new JSONObject(asMap).toString(4));					
+					} else {					
+						JSONObject json = new JSONObject();
+						json.put("error", error.getMessage());
+						asString.append(json.toString(4));						
 					}
 					
 					SwingUtilities.invokeLater(() -> {
@@ -252,13 +371,17 @@ public class STEApps {
 		}); 
 		
 		FB.listenToValueForSpecificPath(b4TextPaneUserList, "/users/", (success, snapshot, error) -> {
-			StringWriter writer = new StringWriter();
-			if (success) {				
-				writer.append(snapshot.getValue(true).toString());				
+			
+			StringWriter str = new StringWriter(); 
+			if (success) {		
+				str.append(new JSONObject((HashMap<String, Object>)snapshot.getValue()).toString(4));				
+								
 			} else {
-				writer.append(error.getMessage());
+				JSONObject json = new JSONObject();
+				json.put("error", error.getMessage());
+				str.append(json.toString(4));				
 			}			
-			SwingUtilities.invokeLater(() -> b4TextPaneUserList.setText(new JSONObject(writer.toString().replaceAll("=",":")).toString(4)));
+			SwingUtilities.invokeLater(() -> b4TextPaneUserList.setText(str.toString()));
 			
 		});
 		
@@ -286,7 +409,7 @@ public class STEApps {
 		f_chckbxSegtigaPengaman.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_SEGITIGA_PENGAMAN));
 		f_chckbxDongkrak.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_DONGKRAK));
 		f_chckbxPitaPembatas.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_PITA_PEMBATAS));
-		f_chckbxGansalRoda.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_GANJAL_RODA));
+		f_chckbxGanjalRoda.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_GANJAL_RODA));
 		f_chckbxKotakObat.setSelected((Boolean)map.get(DBKey.FORM_KELENGKAPAN_KOTAK_OBAT));
 		
 		// FROM PLACARD
@@ -320,18 +443,84 @@ public class STEApps {
 		frmSteapps.setResizable(false);
 		frmSteapps.setBounds(100, 100, 1080, 720);
 		frmSteapps.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frmSteapps.getContentPane().setLayout(null);
+		frmSteapps.getContentPane().setLayout(new CardLayout());
 		
-		JToolBar toolBar = new JToolBar();
-		toolBar.setBounds(7, 7, 84, 16);
-		frmSteapps.getContentPane().add(toolBar);
+		
+		
+		JPanel panelLogin = new JPanel();
+		JPanel panelMain = new JPanel();
+		
+		frmSteapps.getContentPane().add(panelLogin, PANEL_LOGIN);
+		panelLogin.setLayout(new BorderLayout(0, 0));
+		
+		frmSteapps.getContentPane().add(panelMain, PANEL_MAIN);
+		panelMain.setLayout(null);
+		
+		JPanel _panelLogin = new JPanel();
+		_panelLogin.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
+		panelLogin.add(_panelLogin, BorderLayout.CENTER);
+		_panelLogin.setLayout(new MigLayout("", "[grow][108.00][171.00][grow]", "[grow][][][][][][][grow]"));
+		
+		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+		ImageIcon icon = new ImageIcon(classLoader.getResource("logo.png"));
+		JLabel lblLogo = new JLabel(icon);
+		_panelLogin.add(lblLogo, "cell 1 1 2 1,alignx center");
+		
+		JLabel lblAdminName = new JLabel("Admin Name");
+		_panelLogin.add(lblAdminName, "cell 1 3,alignx leading");
+		
+		textFieldAdminName = new JTextField();
+		_panelLogin.add(textFieldAdminName, "cell 2 3,growx");
+		textFieldAdminName.setColumns(10);
+		
+		JLabel lblAdminPass = new JLabel("Password");
+		_panelLogin.add(lblAdminPass, "cell 1 4,alignx leading");
+		
+		textFieldAdminPass = new JPasswordField();
+		_panelLogin.add(textFieldAdminPass, "cell 2 4,growx");
+		textFieldAdminPass.setColumns(10);
+		
+		btnLogin = new JButton("Login");
+		btnLogin.setMinimumSize(new Dimension(150, 23));
+		
+		_panelLogin.add(btnLogin, "cell 1 6 2 1,alignx center");		
+		
+		
+		JMenuBar menuBar = new JMenuBar();
+		menuBar.setBounds(0, 0, 1074, 23);
+        //ImageIcon icon = new ImageIcon("exit.png");
+
+        JMenu menuFile = new JMenu("File");
+        menuFile.setMnemonic(KeyEvent.VK_F);
+
+        JMenuItem menuItemLogout = new JMenuItem("Logout");
+        menuItemLogout.setMnemonic(KeyEvent.VK_L);
+        menuItemLogout.setToolTipText("Logout from admin");
+        menuItemLogout.addActionListener((ActionEvent event) -> {
+            
+        });
+        
+        menuFile.add(menuItemLogout);
+        
+        JMenuItem menuItemExit = new JMenuItem("Exit");
+        menuItemExit.setMnemonic(KeyEvent.VK_E);
+        menuItemExit.setToolTipText("Exit application");
+        menuItemExit.addActionListener((ActionEvent event) -> {
+            
+        });
+        menuFile.add(menuItemExit);
+
+        menuBar.add(menuFile);
+
+		panelMain.add(menuBar);
 		
 		JTabbedPane b1TabPaneUserPost = new JTabbedPane(JTabbedPane.BOTTOM);
 		b1TabPaneUserPost.setBorder(new TitledBorder(null, "User Post", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		b1TabPaneUserPost.setBounds(7, 23, 503, 400);
-		frmSteapps.getContentPane().add(b1TabPaneUserPost);		
+		b1TabPaneUserPost.setBounds(10, 32, 502, 382);
+		panelMain.add(b1TabPaneUserPost);		
 		
-		b2JlistPost  = new JList();
+		b2JlistPost  = new JList<Post.PostEntry>();
+		b2JlistPost.setCellRenderer(new Post.PostRenderer());
 		JScrollPane _b2JScrollPostGui = new JScrollPane(b2JlistPost);
 		b1TabPaneUserPost.addTab("Graphical", null, _b2JScrollPostGui, null);
 		
@@ -344,8 +533,8 @@ public class STEApps {
 		JTabbedPane b1TabPanelPostDetail = new JTabbedPane();
 		b1TabPanelPostDetail.setBorder(new TitledBorder(null, "Post Details", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		b1TabPanelPostDetail.setTabPlacement(JTabbedPane.BOTTOM);
-		b1TabPanelPostDetail.setBounds(512, 23, 557, 400);
-		frmSteapps.getContentPane().add(b1TabPanelPostDetail);
+		b1TabPanelPostDetail.setBounds(522, 32, 542, 382);
+		panelMain.add(b1TabPanelPostDetail);
 		
 		JPanel b2PanelPostDetailGui  = new JPanel();
 		JScrollPane _b2ScrollPanePostDetailGui = new JScrollPane(b2PanelPostDetailGui);
@@ -470,11 +659,11 @@ public class STEApps {
 		f_chckbxPitaPembatas = new JCheckBox("Ada");
 		panelKelengkapanKendaraan.add(f_chckbxPitaPembatas, "cell 1 8");
 		
-		JLabel lblGansalRoda = new JLabel("Gansal Roda");
-		panelKelengkapanKendaraan.add(lblGansalRoda, "cell 0 9");
+		JLabel lblGanjalRoda = new JLabel("Ganjal Roda");
+		panelKelengkapanKendaraan.add(lblGanjalRoda, "cell 0 9");
 		
-		f_chckbxGansalRoda = new JCheckBox("Ada");
-		panelKelengkapanKendaraan.add(f_chckbxGansalRoda, "cell 1 9");
+		f_chckbxGanjalRoda = new JCheckBox("Ada");
+		panelKelengkapanKendaraan.add(f_chckbxGanjalRoda, "cell 1 9");
 		
 		JLabel lblKotakObat = new JLabel("Kotak Obat");
 		panelKelengkapanKendaraan.add(lblKotakObat, "cell 0 10");
@@ -598,8 +787,8 @@ public class STEApps {
 		b1TabPanelPostDetail.addTab("Raw", null, _b2ScrollPanePostDetailRaw, null);
 		
 		JPanel b1PanelUserDetail = new JPanel();
-		b1PanelUserDetail.setBounds(512, 434, 555, 246);
-		frmSteapps.getContentPane().add(b1PanelUserDetail);
+		b1PanelUserDetail.setBounds(522, 425, 542, 255);		
+		panelMain.add(b1PanelUserDetail);
 		b1PanelUserDetail.setLayout(new BorderLayout(0, 0));
 		
 		JTabbedPane b2TabbedPanelDetails = new JTabbedPane(JTabbedPane.BOTTOM);		
@@ -677,8 +866,8 @@ public class STEApps {
 		
 		
 		JPanel b1PanelUserList = new JPanel();
-		b1PanelUserList.setBounds(7, 434, 497, 246);
-		frmSteapps.getContentPane().add(b1PanelUserList);
+		b1PanelUserList.setBounds(10, 425, 502, 255);		
+		panelMain.add(b1PanelUserList);
 		b1PanelUserList.setLayout(new BorderLayout(0, 0));
 		
 		JTabbedPane b2TabbedPanelUserList = new JTabbedPane(JTabbedPane.BOTTOM);

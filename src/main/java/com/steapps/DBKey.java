@@ -5,6 +5,9 @@ package com.steapps;
  */
 
 public class DBKey {
+	
+	public static final String ADMIN_USERNAME = "username";
+	public static final String ADMIN_PASSWORD = "password";
 
     public static final String USER_PASSWORD = "password";
     public static final String USER_IDCARD = "idcard";
