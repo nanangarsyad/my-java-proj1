@@ -33,12 +33,14 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -55,8 +57,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.steapps.Constant.ThreeChoice;
 import com.steapps.Post.PostEntry;
 
+import jiconfont.icons.FontAwesome;
+import jiconfont.swing.IconFontSwing;
 import net.miginfocom.swing.MigLayout;
-import javax.swing.JPasswordField;
 
 
 class ShowWaitAction extends AbstractAction {
@@ -73,38 +76,38 @@ class ShowWaitAction extends AbstractAction {
 	         protected Void doInBackground() throws Exception {
 
 	            // mimic some long-running process here...
-	            Thread.sleep(SLEEP_TIME);
-	            return null;
-	         }
-	      };
+            Thread.sleep(SLEEP_TIME);
+            return null;
+         }
+      };
 
-	      Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
-	      final JDialog dialog = new JDialog(win, "Dialog", ModalityType.APPLICATION_MODAL);
+      Window win = SwingUtilities.getWindowAncestor((AbstractButton)evt.getSource());
+      final JDialog dialog = new JDialog(win, "Dialog", ModalityType.APPLICATION_MODAL);
 
-	      mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
+      mySwingWorker.addPropertyChangeListener(new PropertyChangeListener() {
 
-	         @Override
-	         public void propertyChange(PropertyChangeEvent evt) {
-	            if (evt.getPropertyName().equals("state")) {
-	               if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
-	                  dialog.dispose();
-	               }
-	            }
-	         }
-	      });
-	      mySwingWorker.execute();
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getPropertyName().equals("state")) {
+               if (evt.getNewValue() == SwingWorker.StateValue.DONE) {
+                  dialog.dispose();
+               }
+            }
+         }
+      });
+      mySwingWorker.execute();
 
-	      JProgressBar progressBar = new JProgressBar();
-	      progressBar.setIndeterminate(true);
-	      JPanel panel = new JPanel(new BorderLayout());
-	      panel.add(progressBar, BorderLayout.CENTER);
-	      panel.add(new JLabel("Please wait......."), BorderLayout.PAGE_START);
-	      dialog.add(panel);
-	      dialog.pack();
-	      dialog.setLocationRelativeTo(win);
-	      dialog.setVisible(true);
-	   }
-	}
+      JProgressBar progressBar = new JProgressBar();
+      progressBar.setIndeterminate(true);
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(progressBar, BorderLayout.CENTER);
+      panel.add(new JLabel("Please wait......."), BorderLayout.PAGE_START);
+      dialog.add(panel);
+      dialog.pack();
+      dialog.setLocationRelativeTo(win);
+      dialog.setVisible(true);
+   }
+}
 
 public class STEApps {
 	
@@ -160,6 +163,7 @@ public class STEApps {
 	private JButton btnLogin;
 	private JPasswordField textFieldAdminPass;
 	private JTextField textFieldAdminName;
+	private JToolBar b2JToolBarPostGui;
 
 	/**
 	 * Launch the application.
@@ -170,6 +174,7 @@ public class STEApps {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+					IconFontSwing.register(FontAwesome.getIconFont());
 					WebLookAndFeel.install();
 					STEApps window = new STEApps();
 					window.frmSteapps.setVisible(true);
@@ -208,11 +213,16 @@ public class STEApps {
 		btnLogin.setAction(new ShowWaitAction("Log in"));	
 		btnLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {				
-
 				
 				FB.listenToValueForSpecificPath(btnLogin, "/admins/", (success, snapshot, error) -> {
+					FB.unlistenToValueForSpecificPath(btnLogin, "/admins/", false);
+					
 					String adminName = textFieldAdminName.getText();
 					String adminPass = textFieldAdminPass.getText();
+					
+					textFieldAdminName.setText(null);
+					textFieldAdminPass.setText(null);
+					
 					if (success) {
 						for (DataSnapshot snapChild : snapshot.getChildren()) {
 							Map<String, String> map = (Map<String, String>) snapChild.getValue();
@@ -317,7 +327,7 @@ public class STEApps {
 						}
 						
 						for (DataSnapshot snap: snapshot.getChildren()) {
-							PostEntry entry = new Post.PostEntry(snap.getKey());
+							PostEntry entry = new Post.PostEntry(sel, snap.getKey());
 							listModel.addElement(entry);
 						}
 					}				
@@ -385,9 +395,27 @@ public class STEApps {
 			
 		});
 		
+		setupPostGuiToolbar();
 		
 	}
 	
+	private void setupPostGuiToolbar() {		
+		JButton buttonDelete = new JButton(IconFontSwing.buildIcon(FontAwesome.TIMES_CIRCLE, 20));
+		buttonDelete.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {				
+				PostEntry selPost = (PostEntry) b2JlistPost.getSelectedValue();
+				int selIndex = b2JlistPost.getSelectedIndex();
+				FB.removeChild("/forms/" + selPost.userName+ "/" + selPost.asTime, (succes, error, ref) -> {
+					((DefaultListModel<PostEntry>)b2JlistPost.getModel()).remove(selIndex);
+				});
+			}
+		});
+		b2JToolBarPostGui.add(buttonDelete);
+		
+	}
+
 	private void updatePostDetailForm(Map<String, Object> map, String mapDefValue ,String json) {
 		// FROM APD DRIVER
 		f_chckbxHelm.setSelected((Boolean)map.get(DBKey.FORM_APD_HELM));
@@ -497,7 +525,8 @@ public class STEApps {
         menuItemLogout.setMnemonic(KeyEvent.VK_L);
         menuItemLogout.setToolTipText("Logout from admin");
         menuItemLogout.addActionListener((ActionEvent event) -> {
-            
+        	JPanel parent = (JPanel) frmSteapps.getContentPane();
+            ((CardLayout)parent.getLayout()).show(parent, PANEL_LOGIN);
         });
         
         menuFile.add(menuItemLogout);
@@ -506,7 +535,7 @@ public class STEApps {
         menuItemExit.setMnemonic(KeyEvent.VK_E);
         menuItemExit.setToolTipText("Exit application");
         menuItemExit.addActionListener((ActionEvent event) -> {
-            
+            System.exit(0);
         });
         menuFile.add(menuItemExit);
 
@@ -523,6 +552,9 @@ public class STEApps {
 		b2JlistPost.setCellRenderer(new Post.PostRenderer());
 		JScrollPane _b2JScrollPostGui = new JScrollPane(b2JlistPost);
 		b1TabPaneUserPost.addTab("Graphical", null, _b2JScrollPostGui, null);
+		
+		b2JToolBarPostGui = new JToolBar(JToolBar.VERTICAL);		
+		_b2JScrollPostGui.setRowHeaderView(b2JToolBarPostGui);
 		
 		
 		b2TextAreaPostRaw = new JTextArea();

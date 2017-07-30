@@ -17,10 +17,12 @@ public abstract class Post {
 		final static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd (HH:mm)");
 
 		
+		public final String userName;
 		public final String asDate;
 		public final String asTime;
 		
-		public PostEntry(String time) {
+		public PostEntry(String userName, String time) {
+			this.userName = userName;
 			asTime = time;
 			asDate = Instant.ofEpochMilli(Long.valueOf(time)).atZone(ZoneId.systemDefault()).format(dtf).toString();
 		}

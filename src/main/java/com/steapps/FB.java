@@ -18,6 +18,7 @@ import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.DatabaseReference.CompletionListener;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
@@ -28,10 +29,16 @@ class FB {
 		void onDone(boolean success, DataSnapshot snapshot, DatabaseError erorr);
 	}
 	
+	interface FbCallback2 {
+		void onDone(boolean success, DatabaseError error, DatabaseReference ref);
+	}
+	
 	private static String KEY_FB_LISTENER = "fb-listener";
 	
 	
 	static FirebaseDatabase sFbInstance;
+	
+	
 	
 	static void setupFirebase() {
 		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
@@ -58,6 +65,16 @@ class FB {
 
 		FirebaseApp.initializeApp(options);		
 		sFbInstance = FirebaseDatabase.getInstance();
+	}
+	
+	static void removeChild(String path, FbCallback2 callback) {
+		sFbInstance.getReference(path).removeValue(new CompletionListener() {
+			
+			@Override
+			public void onComplete(DatabaseError error, DatabaseReference ref) {
+				callback.onDone(error == null, error, ref);				
+			}
+		});
 	}
 	
 	static void listenToForm(JTree tree) {
